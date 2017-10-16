@@ -2,9 +2,6 @@ import unittest
 import json
 import urllib3
 
-
-from json.decoder import JSONDecodeError
-
 # -------------------------------------------------------------------------------------------------
 # test fact rest api - fixtures
 
@@ -12,7 +9,8 @@ from json.decoder import JSONDecodeError
 fact_rq_1 = {"owner": "temple", "labels": ["multiplication"], "question": "1 x 2", "answer": "2"}
 fact_rq_2 = {"owner": "temple", "labels": ["multiplication"], "question": "2 x 2", "answer": "4"}
 fact_rq_3 = {"owner": "temple", "labels": ["multiplication"], "question": "2 x 3", "answer": "6"}
-fact_rq_ne = {"uuid": "non-existent-uuid", "owner": "temple", "labels": ["multiplication"], "question": "2 x 4", "answer": "8"}
+fact_rq_ne = {"uuid": "non-existent-uuid", "owner": "temple", "labels": ["multiplication"], 
+              "question": "2 x 4", "answer": "8"}
 
 
 # -------------------------------------------------------------------------------------------------
