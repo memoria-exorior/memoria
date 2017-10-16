@@ -2,7 +2,9 @@ import logging
 import traceback
 
 from flask import request
-from flask_restplus import Api, Resource, reqparse, fields
+from flask_restplus import Api, Resource, reqparse, fields, abort
+from mongoalchemy.exceptions import BadResultException
+
 
 from memoria.config import settings
 from memoria.database.model import Fact, create_fact, update_fact, delete_fact
@@ -108,7 +110,10 @@ class FactItem(Resource):
         """
         Get the Fact.
         """
-        return Fact.query.filter(Fact.uuid == uuid).one()
+        try:
+            return Fact.query.filter(Fact.uuid == uuid).one()
+        except BadResultException:
+            abort(404, "The fact '{}' could not be found.".format(uuid))
 
     @api.expect(fact)
     @api.response(204, 'Fact successfully updated.')
@@ -116,16 +121,23 @@ class FactItem(Resource):
         """
         Update the Fact.
         """
-        data = request.json
-        update_fact(uuid, data)
-        return None, 204
+        try:
+            data = request.json
+            update_fact(uuid, data)
+            return None, 204
+        except BadResultException:
+            abort(404, "The fact '{}' could not be found. Unable to update fact.".format(uuid))
+
 
     @api.response(204, 'Fact successfully deleted.')
     def delete(self, uuid):
         """
         Delete the Fact.
         """
-        delete_fact(uuid)
+        try:
+            return delete_fact(uuid)
+        except BadResultException:
+            abort(404, "The fact '{}' could not be found. Unable to delete fact.".format(uuid))
         return None, 204
 
 

@@ -3,6 +3,8 @@ import json
 import urllib3
 
 
+from json.decoder import JSONDecodeError
+
 # -------------------------------------------------------------------------------------------------
 # test fact rest api - fixtures
 
@@ -10,6 +12,7 @@ import urllib3
 fact_rq_1 = {"owner": "temple", "labels": ["multiplication"], "question": "1 x 2", "answer": "2"}
 fact_rq_2 = {"owner": "temple", "labels": ["multiplication"], "question": "2 x 2", "answer": "4"}
 fact_rq_3 = {"owner": "temple", "labels": ["multiplication"], "question": "2 x 3", "answer": "6"}
+fact_rq_ne = {"uuid": "non-existent-uuid", "owner": "temple", "labels": ["multiplication"], "question": "2 x 4", "answer": "8"}
 
 
 # -------------------------------------------------------------------------------------------------
@@ -22,7 +25,8 @@ class TestFactRESTAPI(unittest.TestCase):
         rest_client = FactRESTAPIClient()
         rest_client.clean_all_facts()
 
-        new_fact = rest_client.create_fact(fact_rq_2)
+        status, new_fact = rest_client.create_fact(fact_rq_2)
+        self.assertEqual(status, 201)
         self.assertIsNotNone(new_fact["uuid"])
         self.assertIsNotNone(new_fact["created_at"])
         self.assertIsNotNone(new_fact["modified_at"])
@@ -40,7 +44,8 @@ class TestFactRESTAPI(unittest.TestCase):
         rest_client.create_fact(fact_rq_2)
         rest_client.create_fact(fact_rq_3)
 
-        facts = rest_client.list_facts()
+        status, facts = rest_client.list_facts()
+        self.assertEqual(status, 200)
         self.assertIsNotNone(facts, None)
         self.assertEqual(facts['page'], 1)
         self.assertEqual(facts['pages'], 1)
@@ -54,10 +59,11 @@ class TestFactRESTAPI(unittest.TestCase):
         rest_client.clean_all_facts()
 
         rest_client.create_fact(fact_rq_1)
-        target_fact = rest_client.create_fact(fact_rq_2)
+        _, target_fact = rest_client.create_fact(fact_rq_2)
         rest_client.create_fact(fact_rq_3)
 
-        retrieved_fact = rest_client.get_fact(target_fact['uuid'])
+        status, retrieved_fact = rest_client.get_fact(target_fact['uuid'])
+        self.assertEqual(status, 200)
         self.assertIsNotNone(retrieved_fact["uuid"])
         self.assertIsNotNone(retrieved_fact["created_at"])
         self.assertIsNotNone(retrieved_fact["modified_at"])
@@ -67,19 +73,30 @@ class TestFactRESTAPI(unittest.TestCase):
         self.assertEqual(retrieved_fact["answer"], "4")
         rest_client.clean_all_facts()
 
+    def test_get_non_exististent_fact(self):
+        rest_client = FactRESTAPIClient()
+        rest_client.clean_all_facts()
+
+        status, error_fact = rest_client.get_fact('non-existent-uuid')
+        self.assertEqual(status, 404)
+        self.assertEqual(error_fact["message"], 
+                         "The fact 'non-existent-uuid' could not be found.")
+        rest_client.clean_all_facts()
+
     def test_update_fact(self):
         rest_client = FactRESTAPIClient()
         rest_client.clean_all_facts()
 
         rest_client.create_fact(fact_rq_1)
-        target_fact = rest_client.create_fact(fact_rq_2)
+        _, target_fact = rest_client.create_fact(fact_rq_2)
         rest_client.create_fact(fact_rq_3)
 
         target_fact["labels"] = ["multiplication", "maths"]
         target_fact["question"] = "6 x 6"
         target_fact["answer"] = "36"
-        rest_client.update_fact(target_fact)
-        updated_fact = rest_client.get_fact(target_fact['uuid'])
+        status, _ = rest_client.update_fact(target_fact)
+        _, updated_fact = rest_client.get_fact(target_fact['uuid'])
+        self.assertEqual(status, 204)
         self.assertIsNotNone(updated_fact["uuid"])
         self.assertIsNotNone(updated_fact["created_at"])
         self.assertIsNotNone(updated_fact["modified_at"])
@@ -89,19 +106,40 @@ class TestFactRESTAPI(unittest.TestCase):
         self.assertEqual(updated_fact["answer"], "36")
         rest_client.clean_all_facts()
 
+    def test_update_non_exististent_fact(self):
+        rest_client = FactRESTAPIClient()
+        rest_client.clean_all_facts()
+
+        status, error_fact = rest_client.update_fact(fact_rq_ne)
+        self.assertEqual(status, 404)
+        self.assertEqual(error_fact["message"], 
+                         "The fact 'non-existent-uuid' could not be found. Unable to update fact.")
+        rest_client.clean_all_facts()
+
     def test_delete_fact(self):
         rest_client = FactRESTAPIClient()
         rest_client.clean_all_facts()
 
         rest_client.create_fact(fact_rq_1)
-        target_fact = rest_client.create_fact(fact_rq_2)
+        _, target_fact = rest_client.create_fact(fact_rq_2)
         rest_client.create_fact(fact_rq_3)
 
-        rest_client.delete_fact(target_fact['uuid'])
-        facts = rest_client.list_facts()
+        status, _ = rest_client.delete_fact(target_fact['uuid'])
+        self.assertEqual(status, 200)
+        _, facts = rest_client.list_facts()
         self.assertIsNotNone(facts, None)
         self.assertEqual(facts['total'], 2)
         self.assertEqual(len(facts['items']), 2)
+        rest_client.clean_all_facts()
+
+    def test_delete_non_exististent_fact(self):
+        rest_client = FactRESTAPIClient()
+        rest_client.clean_all_facts()
+
+        status, error_fact = rest_client.delete_fact('non-existent-uuid')
+        self.assertEqual(status, 404)
+        self.assertEqual(error_fact["message"], 
+                         "The fact 'non-existent-uuid' could not be found. Unable to delete fact.")
         rest_client.clean_all_facts()
 
 
@@ -122,7 +160,7 @@ class FactRESTAPIClient():
                                      body=json.dumps(fact))
         if self.log:
             log_response(response)
-        return json.loads(response.data)
+        return (response.status, json.loads(response.data))
 
     def list_facts(self):
         url = 'http://' + self.host + '/api/fact/facts/?page=1&per_page=10'
@@ -130,7 +168,7 @@ class FactRESTAPIClient():
                                      headers={'Accepts': 'application/json'})
         if self.log:
             log_response(response)
-        return json.loads(response.data)
+        return (response.status, json.loads(response.data))
 
     def get_fact(self, fact_uuid):
         url = 'http://' + self.host + '/api/fact/facts/' + fact_uuid
@@ -138,7 +176,7 @@ class FactRESTAPIClient():
                                      headers={'Accepts': 'application/json'})
         if self.log:
             log_response(response)
-        return json.loads(response.data)
+        return (response.status, json.loads(response.data))
 
     def update_fact(self, fact):
         url = 'http://' + self.host + '/api/fact/facts/' + fact['uuid']
@@ -148,6 +186,10 @@ class FactRESTAPIClient():
                                      body=json.dumps(fact))
         if self.log:
             log_response(response)
+        if response.data is not None and response.data is not b'':
+            return (response.status, json.loads(response.data))
+        else:
+            return (response.status, None)
 
     def delete_fact(self, fact_uuid):
         url = 'http://' + self.host + '/api/fact/facts/' + fact_uuid
@@ -155,9 +197,13 @@ class FactRESTAPIClient():
                                      headers={'Content-Type': 'application/json'})
         if self.log:
             log_response(response)
-    
+        if response.data is not None and response.data is not b'':
+            return (response.status, json.loads(response.data))
+        else:
+            return (response.status, None)
+
     def clean_all_facts(self):
-        fact_list = self.list_facts()
+        _, fact_list = self.list_facts()
         facts = fact_list['items']
         for fact in facts:
             self.delete_fact(fact['uuid'])
