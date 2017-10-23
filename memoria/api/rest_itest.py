@@ -9,7 +9,7 @@ import urllib3
 fact_rq_1 = {"owner": "temple", "labels": ["multiplication"], "question": "1 x 2", "answer": "2"}
 fact_rq_2 = {"owner": "temple", "labels": ["multiplication"], "question": "2 x 2", "answer": "4"}
 fact_rq_3 = {"owner": "temple", "labels": ["multiplication"], "question": "2 x 3", "answer": "6"}
-fact_rq_ne = {"uuid": "non-existent-uuid", "owner": "temple", "labels": ["multiplication"], 
+fact_rq_ne = {"uuid": "non-existent-uuid", "owner": "temple", "labels": ["multiplication"],
               "question": "2 x 4", "answer": "8"}
 
 
@@ -77,7 +77,7 @@ class TestFactRESTAPI(unittest.TestCase):
 
         status, error_fact = rest_client.get_fact('non-existent-uuid')
         self.assertEqual(status, 404)
-        self.assertEqual(error_fact["message"], 
+        self.assertEqual(error_fact["message"],
                          "The fact 'non-existent-uuid' could not be found.")
         rest_client.clean_all_facts()
 
@@ -110,7 +110,7 @@ class TestFactRESTAPI(unittest.TestCase):
 
         status, error_fact = rest_client.update_fact(fact_rq_ne)
         self.assertEqual(status, 404)
-        self.assertEqual(error_fact["message"], 
+        self.assertEqual(error_fact["message"],
                          "The fact 'non-existent-uuid' could not be found. Unable to update fact.")
         rest_client.clean_all_facts()
 
@@ -136,7 +136,7 @@ class TestFactRESTAPI(unittest.TestCase):
 
         status, error_fact = rest_client.delete_fact('non-existent-uuid')
         self.assertEqual(status, 404)
-        self.assertEqual(error_fact["message"], 
+        self.assertEqual(error_fact["message"],
                          "The fact 'non-existent-uuid' could not be found. Unable to delete fact.")
         rest_client.clean_all_facts()
 
@@ -148,6 +148,7 @@ class TestFactRESTAPI(unittest.TestCase):
 class FactRESTAPIClient():
 
     http = urllib3.PoolManager()
+    # host = 'localhost:8888'
     host = 'localhost:8888'
     log = False
 

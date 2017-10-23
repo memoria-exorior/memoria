@@ -65,4 +65,5 @@ class Fact(db.Document):
   labels      : {}
   question    : {}
   answer      : {}
-  >""".format(self.uuid, self.created_at, self.modified_at, self.owner, self.labels, self.question, self.answer)
+  >""".format(self.uuid, self.created_at, self.modified_at, self.owner,
+              self.labels, self.question, self.answer)

@@ -17,9 +17,32 @@ export PYTHONPATH=$PYTHONPATH:.
 
 ## Run Development Mode
 
+### Containerised mongo with localhost memoria-service
+
 ```
-make dev-docker-mongo-start
+make docker-build
+make docker-mongo-deploy
 make run
+...
+make docker-mongo-undeploy
+```
+
+### Containerised mongo and memoria-service
+
+```
+make docker-build
+make docker-deploy
+...
+make docker-undeploy
+```
+
+### Containerised mongo and memoria-service (docker-compose)
+
+```
+make docker-build
+docker-compose up
+...
+docker-compose down
 ```
 
 ---

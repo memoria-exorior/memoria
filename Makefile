@@ -2,19 +2,32 @@
 export PYTHONPATH=.:$$PYTHONPATH
 
 # -------------------------------------------------------------------------------------------------
-# dev mongo db provisioning 
+# docker
 
-dev-docker-mongo-start:
-	docker run -p 27017:27017 --name dev-memoria-mongo -d mongo
+docker-build:
+	docker build -t memoria-service .
 
-dev-docker-mongo-stop:
-	docker rm -f dev-memoria-mongo
+docker-deploy: docker-build
+	docker run -p 27017:27017 --name memoria-mongodb -d mongo
+	docker run -d \
+		-e MONGO_HOST=mongodb \
+		-p 8888:8888 \
+		--link memoria-mongodb:mongodb \
+		--name memoria-service \
+		memoria-service
 
-dev-docker-mongo-shell:
-	docker exec -it dev-memoria-mongo mongo
-	
-dev-mongo-shell:
-	mongo localhost
+docker-undeploy:
+	docker rm -f memoria-mongodb
+	docker rm -f memoria-service
+
+docker-mongo-deploy:
+	docker run -p 27017:27017 --name memoria-mongodb -d mongo
+
+docker-mongo-undeploy:
+	docker rm -f memoria-mongodb
+
+docker-mongo:
+	docker exec -it memoria-mongo mongo
 
 # -------------------------------------------------------------------------------------------------
 # linting
@@ -42,6 +55,7 @@ itest:
 run:
 	venv/bin/python3 memoria/app.py
 
+
 # -------------------------------------------------------------------------------------------------
 # other
 
@@ -50,4 +64,3 @@ deps-freeze:
 
 clean:
 	find memoria -name __pycache__ | xargs rm -f
-

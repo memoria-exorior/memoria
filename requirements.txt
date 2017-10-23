@@ -4,6 +4,9 @@ Flask==0.12.2
 Flask-MongoAlchemy==0.7.2
 flask-restplus==0.9.2
 
+# gunicorn==19.7.1
+gunicorn==19.4.5
+
 # testing libs
 # 
 urllib3==1.22

@@ -27,10 +27,10 @@ ns = api.namespace('fact/facts', description='Operations related to facts')
 
 pagination_arguments = reqparse.RequestParser()
 
-pagination_arguments.add_argument('page', type=int, required=False, 
+pagination_arguments.add_argument('page', type=int, required=False,
                                   default=1, help='Page number')
 
-pagination_arguments.add_argument('per_page', type=int, required=False, 
+pagination_arguments.add_argument('per_page', type=int, required=False,
                                   choices=[1, 10, 100, 1000], default=10,
                                   help='Results per page {error_msg}')
 
@@ -128,7 +128,6 @@ class FactItem(Resource):
         except BadResultException:
             abort(404, "The fact '{}' could not be found. Unable to update fact.".format(uuid))
 
-
     @api.response(204, 'Fact successfully deleted.')
     def delete(self, uuid):
         """
@@ -162,4 +161,3 @@ class NoResultFound(Exception):
 def database_not_found_error_handler(e):
     log.warning(traceback.format_exc())
     return {'message': 'A result was required but none was found.'}, 404
-
