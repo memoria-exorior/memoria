@@ -5,6 +5,7 @@ Entrypoint for memoria service.
 import logging.config
 
 from flask import Flask, Blueprint
+from flask_cors import CORS
 
 from memoria.config import settings
 from memoria.api.rest import ns as facts_namespace
@@ -42,16 +43,19 @@ def create_app():
     app = Flask(__name__)
     configure_app(app)
 
-    # configure api component
+    # Add CORS support to all end points.
+    CORS(app, resources={r"/api/*": {"origins": "*"}})
+
+    # Configure API component.
     blueprint = Blueprint('api', __name__, url_prefix='/api')
     api.init_app(blueprint)
     api.add_namespace(facts_namespace)
     app.register_blueprint(blueprint)
 
-    # configure database component
+    # Configure database component.
     db.init_app(app)
 
-    # add simple health-check endpoint
+    # Add simple health-check endpoint.
     @app.route("/health")
     def health():
         return "ok"
