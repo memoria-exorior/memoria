@@ -10,7 +10,7 @@ gunicorn==19.4.5
 
 # testing libs
 # 
-urllib3==1.22
+urllib3==1.26.5
 flake8==3.4.1
 pylint==1.7.2
 pep8==1.7.0
